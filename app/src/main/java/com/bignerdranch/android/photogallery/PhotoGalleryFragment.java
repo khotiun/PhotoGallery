@@ -1,14 +1,17 @@
 package com.bignerdranch.android.photogallery;
 
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ public class PhotoGalleryFragment extends Fragment {
 
     private RecyclerView mPhotoRecyclerView;
     private List<GalleryItem> mItems = new ArrayList<>();
+    private ThumbnailDownloader<PhotoHolder> mThumbnailDownloader;
 
     public static PhotoGalleryFragment newInstance() {
         return new PhotoGalleryFragment();
@@ -35,6 +39,14 @@ public class PhotoGalleryFragment extends Fragment {
         setRetainInstance(true);//удержание фрагмента
         //Вызов execute() активизирует класс AsyncTask, который запускает свой фоновый поток и вызывает doInBackground(…).
         new FetchItemsTask().execute();
+
+        mThumbnailDownloader = new ThumbnailDownloader<>();
+        //вызов getLooper() следует после вызова start() для ThumbnailDownloader
+        //Тем самым гарантируется, что внутреннее состояние потока готово для продолжения, чтобы исключить теоретически возможную
+        // (хотя и редко встречающуюся) ситуацию гонки (race condition).
+        mThumbnailDownloader.start();
+        mThumbnailDownloader.getLooper();
+        Log.i(TAG, "Background thread started");
     }
 
     @Nullable
@@ -52,6 +64,15 @@ public class PhotoGalleryFragment extends Fragment {
         return v;
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        //вызов quit() завершает поток внутри onDestroy().
+        mThumbnailDownloader.quit();
+        Log.i(TAG, "Background thread destroyed");
+
+    }
+
     private void setupAdapter() {
         //проверку isAdded() перед назначением адаптера. Проверка подтверждает, что фрагмент был присоединен к активности,
         // а следовательно, что результат getActivity() будет отличен от null.
@@ -61,15 +82,15 @@ public class PhotoGalleryFragment extends Fragment {
     }
 
     private class PhotoHolder extends RecyclerView.ViewHolder {
-        private TextView mTitleTextView;
+        private ImageView mItemImageView;
 
         public PhotoHolder(View itemView) {
             super(itemView);
-            mTitleTextView = (TextView) itemView;
+            mItemImageView = (ImageView) itemView.findViewById(R.id.fragment_photo_gallery_image_view);
         }
 
-        public void bindGalleryItem(GalleryItem item) {
-            mTitleTextView.setText(item.toString());
+        public void bindDrawable(Drawable drawable) {
+           mItemImageView.setImageDrawable(drawable);
         }
     }
 
@@ -80,15 +101,20 @@ public class PhotoGalleryFragment extends Fragment {
         }
 
         @Override
-        public PhotoHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            TextView textView = new TextView(getActivity());
-            return new PhotoHolder(textView);
+        public PhotoHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+            LayoutInflater inflater = LayoutInflater.from(getActivity());
+            View view = inflater.inflate(R.layout.gallery_item, viewGroup, false);
+            return new PhotoHolder(view);
         }
 
         @Override
         public void onBindViewHolder(PhotoHolder photoHolder, int position) {
             GalleryItem galleryItem = mGalleryItems.get(position);
-            photoHolder.bindGalleryItem(galleryItem);
+            Drawable placeholder = getResources().getDrawable(R.drawable.bill_up_close);
+            photoHolder.bindDrawable(placeholder);
+            //вызовите метод queueThumbnail() потока и передайте ему объект PhotoHolder, в котором в
+            // конечном итоге будет размещено изображение, и URL-адрес объекта GalleryItem для загрузки
+            mThumbnailDownloader.queueThumbnail(photoHolder, galleryItem.getUrl());
 
         }
 
@@ -102,7 +128,6 @@ public class PhotoGalleryFragment extends Fragment {
 
         @Override
         protected List<GalleryItem> doInBackground(Void... params) {
-           new FlickrFetcher().fetchItems();
             return new FlickrFetcher().fetchItems();
         }
 
