@@ -1,8 +1,11 @@
 package com.bignerdranch.android.photogallery;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
@@ -12,7 +15,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +42,15 @@ public class PhotoGalleryFragment extends Fragment {
         //Вызов execute() активизирует класс AsyncTask, который запускает свой фоновый поток и вызывает doInBackground(…).
         new FetchItemsTask().execute();
 
-        mThumbnailDownloader = new ThumbnailDownloader<>();
+        Handler responseHandler = new Handler();
+        mThumbnailDownloader = new ThumbnailDownloader<>(responseHandler);
+        mThumbnailDownloader.setThumbnailDownloadListener(new ThumbnailDownloader.ThumbnailDownloadListener<PhotoHolder>() {
+            @Override
+            public void onThumbnailDownloaded(PhotoHolder photoHolder, Bitmap bitmap) {
+                Drawable drawable = new BitmapDrawable(getResources(), bitmap);
+                photoHolder.bindDrawable(drawable);
+            }
+        });
         //вызов getLooper() следует после вызова start() для ThumbnailDownloader
         //Тем самым гарантируется, что внутреннее состояние потока готово для продолжения, чтобы исключить теоретически возможную
         // (хотя и редко встречающуюся) ситуацию гонки (race condition).
@@ -67,10 +77,16 @@ public class PhotoGalleryFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        //очистка загрузчика при уничтожении представления
+        mThumbnailDownloader.clearQueue();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
         //вызов quit() завершает поток внутри onDestroy().
         mThumbnailDownloader.quit();
         Log.i(TAG, "Background thread destroyed");
-
     }
 
     private void setupAdapter() {
@@ -128,7 +144,7 @@ public class PhotoGalleryFragment extends Fragment {
 
         @Override
         protected List<GalleryItem> doInBackground(Void... params) {
-            return new FlickrFetcher().fetchItems();
+            return new FlickrFetchr().fetchItems();
         }
 
         @Override

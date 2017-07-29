@@ -22,9 +22,9 @@ import static android.R.attr.format;
  * Created by hotun on 24.07.2017.
  */
 //класс для работы с сетью
-public class FlickrFetcher {
+public class FlickrFetchr {
 
-    private static final String TAG = "FlickrFetcher";
+    private static final String TAG = "FlickrFetchr";
 
     private static final String API_KEY = "310877515e55382e1ae26c0122697660";
     //Метод getUrlBytes(String) получает низкоуровневые данные по URL и возвращает их в виде массива байтов.
