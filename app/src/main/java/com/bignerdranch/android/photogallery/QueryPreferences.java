@@ -1,0 +1,28 @@
+package com.bignerdranch.android.photogallery;
+
+import android.content.Context;
+import android.preference.PreferenceManager;
+
+/**
+ * Created by hotun on 30.07.2017.
+ */
+//класс нужен для сохранения поиска введенного пользователем
+public class QueryPreferences {
+    private static final String PREF_SEARCH_QUERY = "searchQuery";//используется в качестве ключа для хранения запроса
+    //Метод getStoredQuery(Context) возвращает значение запроса, хранящееся в общих настройках.
+    public static String getStoredQuery(Context context) {
+        //метод PreferenceManager.getDefaultSharedPreferences(Context), который возвращает экземпляр с именем по умолчанию
+        // и закрытыми (private) разрешениями (чтобы настройки были доступны только в границах вашего приложения).
+        return PreferenceManager.getDefaultSharedPreferences(context)
+                .getString(PREF_SEARCH_QUERY, null);
+    }
+    //Так как QueryPreferences не имеет собственного контекста, вызывающий компонент должен передать свой контекст как входной параметр
+    //Метод setStoredQuery(Context) записывает запрос в хранилище общих настроек для заданного контекста.
+    public static void setStoredQuery(Context context, String query) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()//используется для получения экземпляра SharedPreferences.Editor. Этот класс используется для сохранения значений в SharedPreferences.
+                .putString(PREF_SEARCH_QUERY, query)
+                .apply();//чтобы эти изменения стали видимыми для всех пользователей файла SharedPreferences
+                //Метод apply() вносит изменения в память немедленно, а непосредственная запись в файл осуществляется в фоновом потоке
+    }
+}
