@@ -9,6 +9,9 @@ import android.preference.PreferenceManager;
 //класс нужен для сохранения поиска введенного пользователем
 public class QueryPreferences {
     private static final String PREF_SEARCH_QUERY = "searchQuery";//используется в качестве ключа для хранения запроса
+    //Наша служба будет опрашивать Flickr на появление новых результатов, поэтому ей нужно знать результат последней выборки.
+    // Для этой работы идеально подойдет механизм SharedPreferences.
+    private static final String PREF_LAST_RESULT_ID = "lastResultId";//используется в качестве ключа для сохранение последнего результата
     //Метод getStoredQuery(Context) возвращает значение запроса, хранящееся в общих настройках.
     public static String getStoredQuery(Context context) {
         //метод PreferenceManager.getDefaultSharedPreferences(Context), который возвращает экземпляр с именем по умолчанию
@@ -24,5 +27,17 @@ public class QueryPreferences {
                 .putString(PREF_SEARCH_QUERY, query)
                 .apply();//чтобы эти изменения стали видимыми для всех пользователей файла SharedPreferences
                 //Метод apply() вносит изменения в память немедленно, а непосредственная запись в файл осуществляется в фоновом потоке
+    }
+    //метод для получения последнего результата
+    public static String getLastResultId(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context)
+                .getString(PREF_LAST_RESULT_ID, null);
+    }
+    //метод для сохранения последней результата
+    public static void setLastResultId(Context context, String lastResultId) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(PREF_LAST_RESULT_ID, lastResultId)
+                .apply();
     }
 }

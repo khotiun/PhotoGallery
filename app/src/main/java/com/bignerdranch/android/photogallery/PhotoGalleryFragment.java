@@ -1,5 +1,6 @@
 package com.bignerdranch.android.photogallery;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -48,6 +49,9 @@ public class PhotoGalleryFragment extends Fragment {
         //Вызов execute() активизирует класс AsyncTask, который запускает свой фоновый поток и вызывает doInBackground(…).
         setHasOptionsMenu(true);//чтобы зарегистрировать фрагмент для получения обратных вызовов меню
         updateItems();
+        //запуск сервиса
+        Intent i = PollService.newIntent(getActivity());
+        getActivity().startService(i);
 
         Handler responseHandler = new Handler();
         mThumbnailDownloader = new ThumbnailDownloader<>(responseHandler);
