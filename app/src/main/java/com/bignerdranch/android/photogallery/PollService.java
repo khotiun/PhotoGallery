@@ -1,5 +1,6 @@
 package com.bignerdranch.android.photogallery;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
@@ -28,6 +29,12 @@ public class PollService extends IntentService {
 
     private static final long POLL_INTERVAL =
             AlarmManager.INTERVAL_FIFTEEN_MINUTES; //интервал
+    public static final String ACTION_SHOW_NOTIFICATION =
+            "com.bignerdranch.android.photogallery.SHOW_NOTIFICATION";
+    public static final String PERM_PRIVATE = //PERM_PRIVATE - разрешение на использование
+            "com.bignerdranch.android.photogallery.PRIVATE";
+    public static final String REQUEST_CODE = "REQUEST_CODE";
+    public static final String NOTIFICATION = "NOTIFICATION";
 
     public static Intent newIntent(Context context) {
         return new Intent(context, PollService.class);
@@ -50,6 +57,8 @@ public class PollService extends IntentService {
             alarmManager.cancel(pi);
             pi.cancel();
         }
+        //запомнить состояние сигнала
+        QueryPreferences.setAlarmOn(context, isOn);
     }
     //Так как PendingIntent также удаляется при отмене сигнала, вы можете проверить, существует ли PendingIntent, чтобы узнать, активен сигнал или нет
     public static boolean isServiceAlarmOn(Context context){
@@ -100,16 +109,29 @@ public class PollService extends IntentService {
                     .setAutoCancel(true)//оповещение при нажатии также будет удаляться с выдвижной панели оповещений
                     .build();
             //
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-            notificationManager.notify(0, notification);//Передаваемый целочисленный параметр содержит идентификатор оповещения, уникальный в границах приложения.
-            // Если вы отправите второе оповещение с тем же идентификатором, оно заменит последнее оповещение, отправленное с этим идентификатором
-
-
+//            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+//            notificationManager.notify(0, notification);//Передаваемый целочисленный параметр содержит идентификатор оповещения, уникальный в границах приложения.
+//            // Если вы отправите второе оповещение с тем же идентификатором, оно заменит последнее оповещение, отправленное с этим идентификатором
+//
+//            sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION), PERM_PRIVATE);//Теперь приложение будет отправлять широковещательный интент при каждом появлении новых результатов поиска.
+//            //PERM_PRIVATE - разрешение на использование
+            //метод для отправки сообщения бродкаст ресиверу
+            showBackgroundNotification(0, notification);
         }
 
         QueryPreferences.setLastResultId(this, resultId);
 
     }
+
+    private void showBackgroundNotification(int requestCode, Notification notification) {
+        Intent i = new Intent(ACTION_SHOW_NOTIFICATION);
+        i.putExtra(REQUEST_CODE, requestCode);
+        i.putExtra(NOTIFICATION, notification);
+        //Метод Context.sendOrderedBroadcast(Intent,String,BroadcastReceiver,Handler,int,String,Bundle) имеет пять дополнительных параметров кроме используемых в sendBroadcast(Intent,String).
+        // Вот они, по порядку: получатель результата, объект Handler для запуска получателя результата, а затем исходные значения кода результата, данных результата и дополнения результата для упорядоченной широковещательной рассылки.
+        sendOrderedBroadcast(i, PERM_PRIVATE, null, null, Activity.RESULT_OK, null, null);
+    }
+
     //Логика проверки доступности сети
     private boolean isNetworkAvailableAndConnected() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);

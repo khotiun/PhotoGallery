@@ -30,7 +30,7 @@ import static com.bignerdranch.android.photogallery.R.string.search;
  * Created by hotun on 24.07.2017.
  */
 
-public class PhotoGalleryFragment extends Fragment {
+public class PhotoGalleryFragment extends VisibleFragment {
 
     private static final String TAG = "PhotoGalleryFragment";
 
