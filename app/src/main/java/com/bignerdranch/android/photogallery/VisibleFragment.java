@@ -12,7 +12,7 @@ import android.widget.Toast;
 /**
  * Created by hotun on 10.08.2017.
  */
-
+//класс для определения просматривает ли пользователь приложение в данный момент если да то нужно отменить уведомление
 public abstract class VisibleFragment extends Fragment {
     private static final String TAG = "VisibleFragment";
 

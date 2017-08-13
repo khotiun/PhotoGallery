@@ -34,7 +34,7 @@ public class FlickrFetchr {
             .parse("https://api.flickr.com/services/rest/")//пакет и название метода для работы
             .buildUpon()
             .appendQueryParameter("api_key", API_KEY)
-            .appendQueryParameter("format", "json")
+            .appendQueryParameter("format", "json")//формат получения данных
             .appendQueryParameter("nojsoncallback", "1")//исключить название метода и прочие скобки из возвращаемого ответа
             .appendQueryParameter("extras", "url_s")
             .build();
@@ -141,6 +141,7 @@ public class FlickrFetchr {
             }
 
             item.setUrl(photoJsonObject.getString("url_s"));
+            item.setOwner(photoJsonObject.getString("owner"));
             items.add(item);
         }
     }
