@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.v4.app.Fragment;
+import android.webkit.WebView;
 
 /**
  * Created by hotun on 13.08.2017.
